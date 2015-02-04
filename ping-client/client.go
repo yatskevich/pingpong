@@ -6,16 +6,37 @@ import (
 	"errors"
 	"log"
 	
-	"net/url"
 	"net/http"
 	"io/ioutil"
 	
 	"os"
+	
+	"github.com/benschw/dns-clb-go/dns"
+	"github.com/benschw/dns-clb-go/clb"
 )
 
-func handler(pongServer string) func(http.ResponseWriter, *http.Request) {
+type HandlerConfig struct {
+	dnsServer dns.Lookup
+	pongServiceDomain string
+}
+
+func handler(config HandlerConfig) func(http.ResponseWriter, *http.Request) {
 	return func (w http.ResponseWriter, r *http.Request) {
-		response, err := http.Get(pongServer)
+		// NOTE: FOR DEMO PURPOSES ONLY. DO NOT USE THIS CODE IN PRODUCTION :)
+		//
+		// It seems that Client Load Balancer (CLB) doesn't handle errors correctly, so 
+		// after the first error internal state will be broken. 
+		// This is the reason to create CLB on every request.
+		// 
+		dnsResolver := clb.NewRandomClb(config.dnsServer)
+		address, err := dnsResolver.GetAddress(config.pongServiceDomain)
+		if err != nil {
+			log.Printf("failed to resolve pong service domain: %v\n", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		
+		response, err := http.Get(fmt.Sprintf("http://%s", address.String()))
 		if err != nil {
 			log.Printf("request failed with error: %v\n", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
@@ -34,14 +55,16 @@ func handler(pongServer string) func(http.ResponseWriter, *http.Request) {
 	}	
 } 
 
-func serve(port int, pongServer *url.URL) error {
-	http.HandleFunc("/", handler(pongServer.String()))
+func serve(port int, config HandlerConfig) error {
+	http.HandleFunc("/", handler(config))
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
 
 func run() error {
 	var portVar = flag.Int("port", 8888, "ping client port")
-	var pongServerVar = flag.String("pong-server", "http://pong:8000", "pong server URL")
+	var dnsVar = flag.String("dns", "172.17.42.1:53", "dns server used to resolve pong-service name")
+	var pongServiceVar = flag.String("pong-service", "pong-server.service.consul", "pong service domain")
+
 	flag.Parse()
 	
 	port := *portVar
@@ -49,12 +72,10 @@ func run() error {
 		return errors.New("server port should be between 1 and 65535")
 	}
 	
-	pongServerUrl, err := url.Parse(*pongServerVar)
-	if err != nil {
-		return err
-	}
+	dnsServer := dns.NewLookupLib(*dnsVar)
 	
-	return serve(port, pongServerUrl)
+	pongServiceDomain := *pongServiceVar
+	return serve(port, HandlerConfig{ dnsServer, pongServiceDomain })
 }
 
 func main() {
