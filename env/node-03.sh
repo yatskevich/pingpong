@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export HOSTNAME=node-three
+export HOSTNAME=node-03
 PUBLIC_IP=192.168.33.12
 JOIN_IP=192.168.33.10
 
@@ -21,4 +21,4 @@ docker run --name consul -h $HOSTNAME \
 # run registrator
 docker run -d \
     -v /var/run/docker.sock:/tmp/docker.sock \
-    -h $HOSTNAME progrium/registrator consul://$PUBLIC_IP:8500
+    -h $HOSTNAME gliderlabs/registrator consul://$PUBLIC_IP:8500

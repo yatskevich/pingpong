@@ -2,7 +2,7 @@
 
 # main consul node
 
-export HOSTNAME=node-one
+export HOSTNAME=node-01
 PUBLIC_IP=192.168.33.10
 
 docker run --name consul -h $HOSTNAME \

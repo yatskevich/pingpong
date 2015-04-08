@@ -18,13 +18,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.synced_folder ".", "/vagrant"
 
-  config.vm.define "node-one" do |node| 
+  config.vm.define "node-01" do |node| 
+    node.vm.provision "shell", inline: "sudo sethostname node-01"
     node.vm.network "private_network", ip: "192.168.33.10"
   end
-  config.vm.define "node-two" do |node| 
+  config.vm.define "node-02" do |node| 
+    node.vm.provision "shell", inline: "sudo sethostname node-02"
     node.vm.network "private_network", ip: "192.168.33.11"
   end
-  config.vm.define "node-three" do |node| 
+  config.vm.define "node-03" do |node| 
+    node.vm.provision "shell", inline: "sudo sethostname node-03"
     node.vm.network "private_network", ip: "192.168.33.12"
   end
 
