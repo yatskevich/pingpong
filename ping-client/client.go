@@ -56,7 +56,16 @@ func handler(config HandlerConfig) func(http.ResponseWriter, *http.Request) {
 } 
 
 func serve(port int, config HandlerConfig) error {
-	http.HandleFunc("/", handler(config))
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "index.html")
+	})
+	
+	http.HandleFunc("/ping", handler(config)) 
+	
+	http.HandleFunc("/static/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, r.URL.Path[1:])
+	})
+		
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
 

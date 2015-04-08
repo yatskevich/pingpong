@@ -1,0 +1,19 @@
+#container {
+	width: 960px;
+	margin: 0 auto;
+}
+
+.pong {
+	font-size: 24px;
+	padding: 10px;
+	border-radius: 10px;
+}
+
+/* pure css extensions */
+.button-xlarge {
+    font-size: 125%;
+}
+
+.l-box {
+	padding: 1em;
+}
